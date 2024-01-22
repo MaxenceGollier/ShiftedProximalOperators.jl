@@ -32,6 +32,7 @@ abstract type ShiftedCompositeProximableFunction <: ShiftedProximableFunction en
 include("utils.jl")
 include("psvd.jl")
 
+include("CompositeNormL1.jl")
 include("CompositeNormL2.jl")
 include("affineNormL2.jl")
 include("rootNormLhalf.jl")
@@ -45,6 +46,7 @@ include("shiftedNormL0Box.jl")
 include("shiftedRootNormLhalf.jl")
 include("shiftedNormL1.jl")
 include("shiftedGroupNormL2.jl")
+include("shiftedCompositeNormL1.jl")
 include("ShiftedCompositeNormL2.jl")
 
 include("shiftedNormL1B2.jl")
@@ -62,6 +64,7 @@ function (ψ::ShiftedProximableFunction)(y)
   return ψ.h(ψ.xsy)
 end
 (ψ::ShiftedCompositeProximableFunction)(y) = ψ.h(ψ.b + ψ.A * y)
+
 (ψ::CompositeProximableFunction)(y) = begin
   z = similar(ψ.b)
   ψ.c!(z, y)

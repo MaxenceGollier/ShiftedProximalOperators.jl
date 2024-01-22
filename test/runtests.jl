@@ -27,9 +27,10 @@ for op ∈ (:AffineNormL2,)
   end
 end
   
-for (op,shifted_op) ∈ zip((:NormL2,), (:ShiftedCompositeNormL2,))
+for (op,composite_op,shifted_op) ∈ zip((:NormL2, :NormL1,), (:CompositeNormL2, :CompositeNormL1,), (:ShiftedCompositeNormL2, :ShiftedCompositeNormL1,))
   @testset "$shifted_op" begin
     ShiftedOp = eval(shifted_op)
+    CompositeOp = eval(composite_op)
 
     function c!(z,x)
       z[1] = 2*x[1] - x[4]
@@ -46,7 +47,7 @@ for (op,shifted_op) ∈ zip((:NormL2,), (:ShiftedCompositeNormL2,))
     A = sparse(Matrix{Float64}(undef,2,4))
 
 
-    ψ = CompositeNormL2(h,c!,J!,A,b)
+    ψ = CompositeOp(h,c!,J!,A,b)
 
     # test non shifted operator
     @test ψ(ones(Float64,4)) == h([1,2])
@@ -65,11 +66,17 @@ for (op,shifted_op) ∈ zip((:NormL2,), (:ShiftedCompositeNormL2,))
     # test prox 
     x = [0.1097,1.1287,-0.29,1.2616]
     y = similar(x)
-    y_true = [0.24545429,0.75250248,-0.66619752 ,1.19372286]
     ν = 0.1056
     prox!(y,ϕ,x,ν)
-    @test sum((y - y_true) .^ 2) ≤ 1e-11
-
+    
+    if "$op" == "NormL2"
+      y_true = [0.24545429,0.75250248,-0.66619752 ,1.19372286]
+      @test sum((y - y_true) .^ 2) ≤ 1e-11
+    
+    elseif  "$op" == "NormL1"
+      y_true = [0.33642, 0.746428, -0.672272, 1.14824]
+      @test sum((y - y_true) .^ 2) ≤ 1e-11
+    end
     # test in place shift
     xk = ones(Float64,4)
     shift!(ϕ,xk)
@@ -90,7 +97,7 @@ for (op,shifted_op) ∈ zip((:NormL2,), (:ShiftedCompositeNormL2,))
     b = zeros(Float32,2)
     A = sparse(Matrix{Float32}(undef,2,4))
 
-    ψ = CompositeNormL2(h,c!,J!,A,b)
+    ψ = CompositeOp(h,c!,J!,A,b)
 
     @test typeof(ψ(zeros(Float32,4))) == Float32
 
