@@ -73,7 +73,7 @@ function prox!(
   g = ψ.A*q + ψ.b
   H = ψ.A*ψ.A'
   
-  C = cholesky(H)
+  C = ldlt(H)
   s =  C\(-g)
 
   for i ∈ eachindex(s)
