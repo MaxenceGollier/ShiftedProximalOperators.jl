@@ -33,6 +33,7 @@ mutable struct ShiftedCompositeNormL2{
   c!::F0
   J!::F1
   A::M
+  A_prev::Union{Nothing, M}  # (Optional) can be used to store the previous Jacobian, useful for quasi-Newton approximations
   shifted_spmat::qrm_shifted_spmat{T}
   spfct::qrm_spfct{T}
   b::V
@@ -41,12 +42,14 @@ mutable struct ShiftedCompositeNormL2{
   dq::V # Preallocated vector to refine the q solution.
   p::V  # Preallocated vector used to compute s(α)ᵀ∇s(α) for the secular equation.
   dp::V # Preallocated vector used to refine the p vector.
+  full_row_rank::Bool # Boolean that tells whether A has full row rank or not. Is updated on each call to `prox!`
   function ShiftedCompositeNormL2(
     λ::T,
     c!::Function,
     J!::Function,
     A::AbstractMatrix{T},
-    b::AbstractVector{T},
+    b::AbstractVector{T};
+    store_previous_jacobian::Bool = false
   ) where {T <: Real}
     p = similar(b, A.n + A.m)
     dp = similar(b, A.n + A.m)
@@ -59,6 +62,8 @@ mutable struct ShiftedCompositeNormL2{
       )
     end
 
+    A_prev = store_previous_jacobian ? copy(A) : nothing
+
     spmat = qrm_spmat_init(A; sym = false)
     shifted_spmat = qrm_shift_spmat(spmat)
     spfct = qrm_spfct_init(spmat)
@@ -68,6 +73,7 @@ mutable struct ShiftedCompositeNormL2{
       c!,
       J!,
       A,
+      A_prev,
       shifted_spmat,
       spfct,
       b,
@@ -76,6 +82,7 @@ mutable struct ShiftedCompositeNormL2{
       dq,
       p,
       dp,
+      false
     )
   end
 end
@@ -94,7 +101,7 @@ shifted(
   ψ.c!(b, xk)
   A = similar(ψ.A)
   ψ.J!(A, xk)
-  ShiftedCompositeNormL2(ψ.h.lambda, ψ.c!, ψ.J!, A, b)
+  ShiftedCompositeNormL2(ψ.h.lambda, ψ.c!, ψ.J!, A, b, store_previous_jacobian = ψ.store_previous_jacobian)
 end
 
 fun_name(ψ::ShiftedCompositeNormL2) = "shifted `ℓ₂` norm"
@@ -110,6 +117,7 @@ function prox!(
   atol = eps(T)^0.3,
   max_time = 180.0,
 ) where {T <: Real, F0 <: Function, F1 <: Function, M <: AbstractMatrix{T}, V <: AbstractVector{T}}
+  @assert ν > zero(T)
   start_time = time()
   θ = T(0.8)
   α = zero(T)
@@ -134,8 +142,8 @@ function prox!(
   _obj_dot_grad!(spmat, spfct, ψ.p, ψ.q, ψ.g, ψ.dq)
 
   # Check full-rankness
-  full_row_rank = (qrm_get(spfct, "qrm_rd_num") == 0)
-  if !full_row_rank
+  ψ.full_row_rank = (qrm_get(spfct, "qrm_rd_num") == 0)
+  if !ψ.full_row_rank
     # QRMumps cannot factorize rank-deficient matrices; use the Golub-Riley iteration instead
     α = αmin
     qrm_golub_riley!(
