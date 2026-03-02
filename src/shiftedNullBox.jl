@@ -39,6 +39,13 @@ end
 shifted(
   h::NullRegularizer{T},
   xk::AbstractVector{T},
+  l,
+  u,
+  selected::AbstractArray{I} = 1:length(xk),
+) where {T <: Real, I <: Integer} = shifted(h, xk, l, u)
+shifted(
+  h::NullRegularizer{T},
+  xk::AbstractVector{T},
   l::VT,
   u::VT,
 ) where {T <: Real, VT} = ShiftedNullRegularizerBox(h, zero(xk), false, l, u)
