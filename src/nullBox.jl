@@ -22,7 +22,6 @@ mutable struct NullRegularizerBox{T <: Real, V <: AbstractVector{T}}
     u::V
 end
 
-NullRegularizerBox(l::V, u::V) where {T <: Real, V <: AbstractVector{T}} = NullRegularizerBox(l, u)
 NullRegularizerBox(::Type{T}, n::Integer) where {T <: Real} = NullRegularizerBox(fill(T(-Inf), n), fill(T(Inf), n))
 
 function (h::NullRegularizerBox{T})(y) where {T <: Real}
