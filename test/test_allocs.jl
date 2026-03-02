@@ -38,9 +38,13 @@ end
 
 @testset "allocs" begin
 
-  for op ∈ (:ShiftedNullRegularizerBox,)
-    h_shifted_box = shifted(NullRegularizer(1.0), [1.0, 2.0], [0.0, 0.0], [2.0, 3.0])
-    @test @wrappedallocs(prox!(y, h_shifted_box, [3.0, 4.0], T(1.0))) == 0
+  for op ∈ (:NullRegularizer,)
+    h = eval(op)(Float64)
+    @test @wrappedallocs(h([0.0, 0.0])) == 0
+    h_shifted_box = shifted(h, [1.0, 2.0], [0.0, 0.0], [2.0, 3.0])
+    @test @wrappedallocs(h_shifted_box([0.0, 0.0])) == 0
+    y = zeros(Float64, 2)
+    @test @wrappedallocs(prox!(y, h_shifted_box, [3.0, 4.0], 1.0)) == 0
     @test @wrappedallocs(iprox!(y, h_shifted_box, [3.0, 4.0], [2.0, 4.0])) == 0
   end
 
@@ -73,7 +77,7 @@ end
     ν = 0.1056
     @test @wrappedallocs(prox!(y, ϕ, x, ν)) == 0
   end
-  for op ∈ (:NormL0, :NormL1, :RootNormLhalf, :NullRegularizer)
+  for op ∈ (:NormL0, :NormL1, :RootNormLhalf,)
     h = eval(op)(1.0)
     n = 1000
     xk = rand(n)
@@ -106,7 +110,7 @@ end
     @test allocs == 0
   end
 
-  for op ∈ (:NormL0, :NormL1, :NullRegularizer)
+  for op ∈ (:NormL0, :NormL1,)
     h = eval(op)(1.0)
     n = 1000
     xk = rand(n)
