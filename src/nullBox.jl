@@ -17,13 +17,12 @@ h(x) = \chi(x | [l, u])
 
 In the second constructor, the bounds are vectors of type T and size n set to -Inf and +Inf, respectively. 
 """
-mutable struct NullRegularizerBox{T <: Real, V <: AbstractVector{T}} <: ShiftedProximableFunction 
+mutable struct NullRegularizerBox{T <: Real, V <: AbstractVector{T}} 
     l::V
     u::V
-    Δ::T
 end
 
-NullRegularizerBox(l::V, u::V) where {T <: Real, V <: AbstractVector{T}} = NullRegularizerBox(l, u, zero(T))
+NullRegularizerBox(l::V, u::V) where {T <: Real, V <: AbstractVector{T}} = NullRegularizerBox(l, u)
 NullRegularizerBox(::Type{T}, n::Integer) where {T <: Real} = NullRegularizerBox(fill(T(-Inf), n), fill(T(Inf), n))
 
 function (h::NullRegularizerBox{T})(y) where {T <: Real}
@@ -55,7 +54,7 @@ function prox!(
 ) where {T <: Real}
   @assert ν > zero(T)
   @inbounds for i in eachindex(y)
-    y[i] = clamp(q[i], h.l[i], h.u[i])
+    y[i] = prox_zero(q[i], h.l[i], h.u[i])
   end
   return y
 end
@@ -67,8 +66,7 @@ function iprox!(
   d::AbstractVector{T},
 ) where {T <: Real}
   @inbounds for i in eachindex(y)
-    @assert d[i] > 0
-    y[i] = clamp(g[i] / d[i], h.l[i], h.u[i])
+    y[i] = iprox_zero(d[i], g[i], h.l[i], h.u[i])
   end
   return y
 end
