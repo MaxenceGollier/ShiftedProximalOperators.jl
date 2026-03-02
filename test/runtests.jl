@@ -7,6 +7,40 @@ using Test
 
 include("test_psvd.jl")
 
+@testset "NullRegularizer" begin
+  h = NullRegularizer(Float64)
+  @test h(1.0) == 0.0
+  y = similar([1.0, 2.0])
+  prox!(y, h, [3.0, 4.0], 1.0)
+  @test all(y .== [3.0, 4.0])
+
+  h_shifted = shifted(h, [1.0, 2.0])
+  @test h_shifted(1.0) == 0.0
+  prox!(y, h_shifted, [3.0, 4.0], 1.0)
+  @test all(y .== [3.0, 4.0])
+
+  shift!(h_shifted, [5.0, 6.0])
+  @test h_shifted(1.0) == 0.0
+  prox!(y, h_shifted, [3.0, 4.0], 1.0)
+  @test all(y .== [3.0, 4.0])
+
+  h = NullRegularizer(Float32)
+  @test h(1.0f0) == 0.0f0
+  y = similar([1.0f0, 2.0f0])
+  prox!(y, h, [3.0f0, 4.0f0], 1.0f0)
+  @test all(y .== [3.0f0, 4.0f0])
+
+  h_shifted = shifted(h, [1.0f0, 2.0f0])
+  @test h_shifted(1.0f0) == 0.0f0
+  prox!(y, h_shifted, [3.0f0, 4.0f0], 1.0f0)
+  @test all(y .== [3.0f0, 4.0f0])
+
+  shift!(h_shifted, [5.0f0, 6.0f0])
+  @test h_shifted(1.0f0) == 0.0f0
+  prox!(y, h_shifted, [3.0f0, 4.0f0], 1.0f0)
+  @test all(y .== [3.0f0, 4.0f0])
+end
+
 for (op, composite_op, shifted_op) ∈
     zip((:NormL2,), (:CompositeNormL2,), (:ShiftedCompositeNormL2,))
   @testset "$shifted_op" begin

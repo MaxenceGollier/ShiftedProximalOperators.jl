@@ -30,6 +30,7 @@ include("groupNormL2.jl")
 include("Rank.jl")
 include("cappedl1.jl")
 include("Nuclearnorm.jl")
+include("null.jl")
 
 include("shiftedCompositeNormL2.jl")
 include("shiftedNormL0.jl")
