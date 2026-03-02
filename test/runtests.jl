@@ -8,81 +8,62 @@ using Test
 include("test_psvd.jl")
 
 @testset "NullRegularizer" begin
-  h = NullRegularizer(Float64)
-  @test h([1.0, 1.0]) == 0.0
-  y = similar([1.0, 2.0])
-  prox!(y, h, [3.0, 4.0], 1.0)
-  @test all(y .== [3.0, 4.0])
-  iprox!(y, h, [3.0, 4.0], [2.0, 4.0])
-  @test all(y .== -[1.5, 1.0])
+  for T in (Float64, Float32)
+    h = NullRegularizer(T)
+    @test h(T.([1.0, 1.0])) == T(0.0)
+    y = similar(T.([1.0, 2.0]))
+    prox!(y, h, T.([3.0, 4.0]), T(1.0))
+    @test all(y .== T.([3.0, 4.0]))
+    iprox!(y, h, T.([3.0, 4.0]), T.([2.0, 4.0]))
+    @test all(y .== -T.([1.5, 1.0]))
 
-  h_shifted = shifted(h, [1.0, 2.0])
-  @test h_shifted([1.0, 1.0]) == 0.0
-  prox!(y, h_shifted, [3.0, 4.0], 1.0)
-  @test all(y .== [3.0, 4.0])
-  iprox!(y, h_shifted, [3.0, 4.0], [2.0, 4.0])
-  @test all(y .== -[1.5, 1.0])
+    h_shifted = shifted(h, T.([1.0, 2.0]))
+    @test h_shifted(T.([1.0, 1.0])) == T(0.0)
+    prox!(y, h_shifted, T.([3.0, 4.0]), T(1.0))
+    @test all(y .== T.([3.0, 4.0]))
+    iprox!(y, h_shifted, T.([3.0, 4.0]), T.([2.0, 4.0]))
+    @test all(y .== -T.([1.5, 1.0]))
 
-  shift!(h_shifted, [5.0, 6.0])
-  @test h_shifted([1.0, 1.0]) == 0.0
-  prox!(y, h_shifted, [3.0, 4.0], 1.0)
-  @test all(y .== [3.0, 4.0])
-  iprox!(y, h_shifted, [3.0, 4.0], [2.0, 4.0])
-  @test all(y .== -[1.5, 1.0])
+    shift!(h_shifted, T.([5.0, 6.0]))
+    @test h_shifted(T.([1.0, 1.0])) == T(0.0)
+    prox!(y, h_shifted, T.([3.0, 4.0]), T(1.0))
+    @test all(y .== T.([3.0, 4.0]))
+    iprox!(y, h_shifted, T.([3.0, 4.0]), T.([2.0, 4.0]))
+    @test all(y .== -T.([1.5, 1.0]))
 
-  h = NullRegularizer(Float32)
-  @test h([1.0f0, 1.0f0]) == 0.0f0
-  y = similar([1.0f0, 2.0f0])
-  prox!(y, h, [3.0f0, 4.0f0], 1.0f0)
-  @test all(y .== [3.0f0, 4.0f0])
-  iprox!(y, h, [3.0f0, 4.0f0], [2.0f0, 4.0f0])
-  @test all(y .== -[1.5f0, 1.0f0])
+    h_shifted_box = shifted(h, T.([1.0, 2.0]), T.([0.0, 0.0]), T.([2.0, 3.0]))
+    @test h_shifted_box.shifted_twice == false
+    @test h_shifted_box(T.([0.0, 0.0])) == T(0.0)
+    @test h_shifted_box(T.([-1.0, 0.0])) == T(Inf)
+    @test h_shifted_box(T.([2.0, 3.0])) == T(0.0)
+    @test h_shifted_box(T.([1.0, 1.5])) == T(0.0)
+    prox!(y, h_shifted_box, T.([3.0, 4.0]), T(1.0))
+    @test all(y .== T.([2.0, 3.0]))
+    iprox!(y, h_shifted_box, T.([3.0, 4.0]), T.([2.0, 4.0]))
+    @test all(y .== T.([0.0, 0.0]))
 
-  h_shifted = shifted(h, [1.0f0, 2.0f0])
-  @test h_shifted([1.0f0, 1.0f0]) == 0.0f0
-  prox!(y, h_shifted, [3.0f0, 4.0f0], 1.0f0)
-  @test all(y .== [3.0f0, 4.0f0])
-  iprox!(y, h_shifted, [3.0f0, 4.0f0], [2.0f0, 4.0f0])
-  @test all(y .== -[1.5f0, 1.0f0])
+    shift!(h_shifted_box, T.([5.0, 6.0]))
 
-  shift!(h_shifted, [5.0f0, 6.0f0])
-  @test h_shifted([1.0f0, 1.0f0]) == 0.0f0
-  prox!(y, h_shifted, [3.0f0, 4.0f0], 1.0f0)
-  @test all(y .== [3.0f0, 4.0f0])
-  iprox!(y, h_shifted, [3.0f0, 4.0f0], [2.0f0, 4.0f0])
-  @test all(y .== -[1.5f0, 1.0f0])
-end
+    @test h_shifted_box(T.([0.0, 0.0])) == T(0.0)
+    @test h_shifted_box(T.([-1.0, 0.0])) == T(Inf)
+    @test h_shifted_box(T.([2.0, 3.0])) == T(0.0)
+    @test h_shifted_box(T.([1.0, 1.5])) == T(0.0)
+    prox!(y, h_shifted_box, T.([3.0, 4.0]), T(1.0))
+    @test all(y .== T.([2.0, 3.0]))
+    iprox!(y, h_shifted_box, T.([3.0, 4.0]), T.([2.0, 4.0]))
+    @test all(y .== T.([0.0, 0.0]))
 
-@testset "NullRegularizerBox" begin
-  l = [-1.0, -2.0]
-  u = [1.0, 2.0]
-  h = NullRegularizerBox(l, u)
-  @test h([0.0, 0.0]) == 0.0
-  @test h([-1.0, -2.0]) == 0.0
-  @test h([1.0, 2.0]) == 0.0
-  @test h([-1.01, -2.0]) == Inf
-  @test h([1.01, 2.0]) == Inf
-
-  y = similar([3.0, 4.0])
-  prox!(y, h, [3.0, 4.0], 1.0)
-  @test all(y .== [1.0, 2.0])
-  iprox!(y, h, [3.0, 4.0], [2.0, 4.0])
-  @test all(y .== -[1.0, 1.0])
-
-  l = [-1.0f0, -2.0f0]
-  u = [1.0f0, 2.0f0]
-  h = NullRegularizerBox(l, u)
-  @test h([0.0f0, 0.0f0]) == 0.0f0
-  @test h([-1.0f0, -2.0f0]) == 0.0f0
-  @test h([1.0f0, 2.0f0]) == 0.0f0
-  @test h([-1.01f0, -2.0f0]) == Inf
-  @test h([1.01f0, 2.0f0]) == Inf
-
-  y = similar([3.0f0, 4.0f0])
-  prox!(y, h, [3.0f0, 4.0f0], 1.0f0)
-  @test all(y .== [1.0f0, 2.0f0])
-  iprox!(y, h, [3.0f0, 4.0f0], [2.0f0, 4.0f0])
-  @test all(y .== -[1.0f0, 1.0f0])
+    h_shifted_twice_box = shifted(h_shifted_box, T.([1.0, 2.0]))
+    @test h_shifted_twice_box.shifted_twice == true
+    @test h_shifted_twice_box(T.([0.0, 0.0])) == h_shifted_box(T.([1.0, 2.0]))
+    @test h_shifted_twice_box(T.([-1.0, 0.0])) == h_shifted_box(T.([0.0, 2.0]))
+    @test h_shifted_twice_box(T.([2.0, 3.0])) == h_shifted_box(T.([3.0, 5.0]))
+    @test h_shifted_twice_box(T.([1.0, 1.5])) == h_shifted_box(T.([2.0, 3.5]))
+    prox!(y, h_shifted_twice_box, T.([3.0, 4.0]), T(1.0))
+    @test all(y .== T.([1.0, 1.0]))
+    iprox!(y, h_shifted_twice_box, T.([3.0, 4.0]), T.([2.0, 4.0]))
+    @test all(y .== T.([-1.0, -1.0]))
+  end
 end
 
 for (op, composite_op, shifted_op) ∈
