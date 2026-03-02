@@ -9,7 +9,7 @@ include("test_psvd.jl")
 
 @testset "NullRegularizer" begin
   h = NullRegularizer(Float64)
-  @test h(1.0) == 0.0
+  @test h([1.0, 1.0]) == 0.0
   y = similar([1.0, 2.0])
   prox!(y, h, [3.0, 4.0], 1.0)
   @test all(y .== [3.0, 4.0])
@@ -17,21 +17,21 @@ include("test_psvd.jl")
   @test all(y .== [1.5, 1.0])
 
   h_shifted = shifted(h, [1.0, 2.0])
-  @test h_shifted(1.0) == 0.0
+  @test h_shifted([1.0, 1.0]) == 0.0
   prox!(y, h_shifted, [3.0, 4.0], 1.0)
   @test all(y .== [3.0, 4.0])
   iprox!(y, h_shifted, [3.0, 4.0], [2.0, 4.0])
   @test all(y .== [1.5, 1.0])
 
   shift!(h_shifted, [5.0, 6.0])
-  @test h_shifted(1.0) == 0.0
+  @test h_shifted([1.0, 1.0]) == 0.0
   prox!(y, h_shifted, [3.0, 4.0], 1.0)
   @test all(y .== [3.0, 4.0])
   iprox!(y, h_shifted, [3.0, 4.0], [2.0, 4.0])
   @test all(y .== [1.5, 1.0])
 
   h = NullRegularizer(Float32)
-  @test h(1.0f0) == 0.0f0
+  @test h([1.0f0, 1.0f0]) == 0.0f0
   y = similar([1.0f0, 2.0f0])
   prox!(y, h, [3.0f0, 4.0f0], 1.0f0)
   @test all(y .== [3.0f0, 4.0f0])
@@ -39,18 +39,50 @@ include("test_psvd.jl")
   @test all(y .== [1.5f0, 1.0f0])
 
   h_shifted = shifted(h, [1.0f0, 2.0f0])
-  @test h_shifted(1.0f0) == 0.0f0
+  @test h_shifted([1.0f0, 1.0f0]) == 0.0f0
   prox!(y, h_shifted, [3.0f0, 4.0f0], 1.0f0)
   @test all(y .== [3.0f0, 4.0f0])
   iprox!(y, h_shifted, [3.0f0, 4.0f0], [2.0f0, 4.0f0])
   @test all(y .== [1.5f0, 1.0f0])
 
   shift!(h_shifted, [5.0f0, 6.0f0])
-  @test h_shifted(1.0f0) == 0.0f0
+  @test h_shifted([1.0f0, 1.0f0]) == 0.0f0
   prox!(y, h_shifted, [3.0f0, 4.0f0], 1.0f0)
   @test all(y .== [3.0f0, 4.0f0])
   iprox!(y, h_shifted, [3.0f0, 4.0f0], [2.0f0, 4.0f0])
   @test all(y .== [1.5f0, 1.0f0])
+end
+
+@testset "NullRegularizerBox" begin
+  l = [-1.0, -2.0]
+  u = [1.0, 2.0]
+  h = NullRegularizerBox(l, u)
+  @test h([0.0, 0.0]) == 0.0
+  @test h([-1.0, -2.0]) == 0.0
+  @test h([1.0, 2.0]) == 0.0
+  @test h([-1.01, -2.0]) == Inf
+  @test h([1.01, 2.0]) == Inf
+
+  y = similar([3.0, 4.0])
+  prox!(y, h, [3.0, 4.0], 1.0)
+  @test all(y .== [1.0, 2.0])
+  iprox!(y, h, [3.0, 4.0], [2.0, 4.0])
+  @test all(y .== [1.0, 1.0])
+
+  l = [-1.0f0, -2.0f0]
+  u = [1.0f0, 2.0f0]
+  h = NullRegularizerBox(l, u)
+  @test h([0.0f0, 0.0f0]) == 0.0f0
+  @test h([-1.0f0, -2.0f0]) == 0.0f0
+  @test h([1.0f0, 2.0f0]) == 0.0f0
+  @test h([-1.01f0, -2.0f0]) == Inf
+  @test h([1.01f0, 2.0f0]) == Inf
+
+  y = similar([3.0f0, 4.0f0])
+  prox!(y, h, [3.0f0, 4.0f0], 1.0f0)
+  @test all(y .== [1.0f0, 2.0f0])
+  iprox!(y, h, [3.0f0, 4.0f0], [2.0f0, 4.0f0])
+  @test all(y .== [1.0f0, 1.0f0])
 end
 
 for (op, composite_op, shifted_op) ∈

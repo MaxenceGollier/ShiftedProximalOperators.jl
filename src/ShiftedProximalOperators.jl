@@ -31,6 +31,7 @@ include("Rank.jl")
 include("cappedl1.jl")
 include("Nuclearnorm.jl")
 include("null.jl")
+include("nullBox.jl")
 
 include("shiftedCompositeNormL2.jl")
 include("shiftedNormL0.jl")
