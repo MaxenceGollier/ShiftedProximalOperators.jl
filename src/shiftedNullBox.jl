@@ -18,50 +18,51 @@ function as well and `[l, u]` is the box that defines the domain of the function
 - `l`: The lower bound of the box.
 - `u`: The upper bound of the box.
 """
-mutable struct ShiftedNullRegularizerBox{T <: Real, V <: AbstractVector{T}} <: ShiftedProximableFunction 
+mutable struct ShiftedNullRegularizerBox{T <: Real, V <: AbstractVector{T}, VT <: Union{AbstractVector{T}, T}} <: ShiftedProximableFunction 
   h::NullRegularizer{T}
   sj::V
   shifted_twice::Bool
-  l::V
-  u::V
+  l::VT
+  u::VT
 
   function ShiftedNullRegularizerBox(
     h::NullRegularizer{T},
     sj::V,
     shifted_twice::Bool,
-    l::V,
-    u::V,
-  ) where {T <: Real, V <: AbstractVector{T}}
-    new{T, V}(h, sj, shifted_twice, l, u)
+    l::VT,
+    u::VT,
+  ) where {T <: Real, V <: AbstractVector{T}, VT <: Union{AbstractVector{T}, T}}
+    new{T, V, VT}(h, sj, shifted_twice, l, u)
   end
 end
 
 shifted(
   h::NullRegularizer{T},
   xk::AbstractVector{T},
-  l::AbstractVector{T},
-  u::AbstractVector{T},
-) where {T <: Real} = ShiftedNullRegularizerBox(h, zero(xk), false, l, u)
+  l::VT,
+  u::VT,
+) where {T <: Real, VT} = ShiftedNullRegularizerBox(h, zero(xk), false, l, u)
 shifted(
   h::NullRegularizer{T},
   xk::AbstractVector{T},
   Δ::T,
   χ::Conjugate{IndBallL1{T}},
-) where {T <: Real, V <: AbstractVector{T}} = ShiftedNullRegularizerBox(h, zero(xk), false, fill(-Δ, length(xk)), fill(Δ, length(xk)))
+) where {T <: Real} = ShiftedNullRegularizerBox(h, zero(xk), false, -Δ, Δ)
 shifted(
-  ψ::ShiftedNullRegularizerBox{T, V},
+  ψ::ShiftedNullRegularizerBox{T, V, VT},
   sj::AbstractVector{T},
-) where {T <: Real, V <: AbstractVector{T}} =
-  ShiftedNullRegularizerBox(ψ.h, sj, true, ψ.l, ψ.u)
+) where {T <: Real, V <: AbstractVector{T}, VT} = ShiftedNullRegularizerBox(ψ.h, sj, true, ψ.l, ψ.u)
 
-function shift!(ψ::ShiftedNullRegularizerBox{T, V}, shift::AbstractVector{T}) where {T <: Real, V <: AbstractVector{T}}
+function shift!(ψ::ShiftedNullRegularizerBox{T, V, VT}, shift::AbstractVector{T}) where {T <: Real, V <: AbstractVector{T}, VT}
   ψ.shifted_twice && (ψ.sj .= shift)
 end
 
 function (ψ::ShiftedNullRegularizerBox{T, V})(y) where {T <: Real, V <: AbstractVector{T}}
   ϵ = √eps(eltype(y))
   @inbounds for i in eachindex(y)
-    if !(ψ.l[i] - ϵ ≤ ψ.sj[i] + y[i] ≤ ψ.u[i] + ϵ)
+    l = ψ.l isa AbstractVector ? ψ.l[i] : ψ.l
+    u = ψ.u isa AbstractVector ? ψ.u[i] : ψ.u
+    if !(l - ϵ ≤ ψ.sj[i] + y[i] ≤ u + ϵ)
       return T(Inf)
     end
   end
@@ -81,7 +82,9 @@ function prox!(
 ) where {T <: Real, V <: AbstractVector{T}}
   @assert σ > zero(T)
   @inbounds for i ∈ eachindex(y)
-    y[i] = prox_zero(q[i], ψ.l[i] - ψ.sj[i], ψ.u[i] - ψ.sj[i])
+    l = ψ.l isa AbstractVector ? ψ.l[i] : ψ.l
+    u = ψ.u isa AbstractVector ? ψ.u[i] : ψ.u
+    y[i] = prox_zero(q[i], l - ψ.sj[i], u - ψ.sj[i])
   end
   return y
 end
@@ -93,7 +96,9 @@ function iprox!(
   d::AbstractVector{T},
 ) where {T <: Real, V <: AbstractVector{T}}
   @inbounds for i ∈ eachindex(y)
-    y[i] = iprox_zero(d[i], g[i], ψ.l[i] - ψ.sj[i], ψ.u[i] - ψ.sj[i])
+    l = ψ.l isa AbstractVector ? ψ.l[i] : ψ.l
+    u = ψ.u isa AbstractVector ? ψ.u[i] : ψ.u
+    y[i] = iprox_zero(d[i], g[i], l - ψ.sj[i], u - ψ.sj[i])
   end
   return y
 end
