@@ -61,6 +61,6 @@ function iprox!(
 ) where {T <: Real}
   @inbounds for i ∈ eachindex(y)
     @assert d[i] > 0
-    y[i] = g[i] / d[i]
+    y[i] = - g[i] / d[i]
   end
 end
