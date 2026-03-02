@@ -52,3 +52,15 @@ function prox!(
   y .= q
   return y
 end
+
+function iprox!(
+  y::AbstractVector{T},
+  ψ::NullRegularizer{T},
+  g::AbstractVector{T},
+  d::AbstractVector{T},
+) where {T <: Real}
+  @inbounds for i ∈ eachindex(y)
+    @assert d[i] > 0
+    y[i] = g[i] / d[i]
+  end
+end
