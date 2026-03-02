@@ -32,19 +32,19 @@ function (h::NullRegularizer{T})(y) where {T <: Real}
   return zero(T)
 end
 
-fun_name(ψ::NullRegularizer{T}) where {T <: Real} = "null regularizer"
-fun_expr(ψ::NullRegularizer{T}) where {T <: Real} = "t ↦ 0"
-fun_params(ψ::NullRegularizer{T}) where {T <: Real} = ""
+fun_name(h::NullRegularizer{T}) where {T <: Real} = "null regularizer"
+fun_expr(h::NullRegularizer{T}) where {T <: Real} = "t ↦ 0"
+fun_params(h::NullRegularizer{T}) where {T <: Real} = ""
 
-function Base.show(io::IO, ψ::NullRegularizer{T}) where {T <: Real}
-  println(io, "description : ", fun_name(ψ))
-  println(io, "expression  : ", fun_expr(ψ))
-  println(io, "parameters  : ", fun_params(ψ))
+function Base.show(io::IO, h::NullRegularizer{T}) where {T <: Real}
+  println(io, "description : ", fun_name(h))
+  println(io, "expression  : ", fun_expr(h))
+  println(io, "parameters  : ", fun_params(h))
 end
 
 function prox!(
   y::AbstractVector{T},
-  ψ::NullRegularizer{T},
+  h::NullRegularizer{T},
   q::AbstractVector{T},
   ν::T
 ) where {T <: Real}
@@ -55,7 +55,7 @@ end
 
 function iprox!(
   y::AbstractVector{T},
-  ψ::NullRegularizer{T},
+  h::NullRegularizer{T},
   g::AbstractVector{T},
   d::AbstractVector{T},
 ) where {T <: Real}
